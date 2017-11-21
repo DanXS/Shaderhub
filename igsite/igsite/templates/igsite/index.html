@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>About</h2>
+<p>
+Welcome to Shader Hub.  This site is designed for 3D Artists and GLSL Shader programmers as well as anyone who just wants to play around with computer graphics and WebGL. It is essentially a 3D repository where artists can upload their work and view it in 3D using WebGL. Note that you <b>must</b> have <a href="http://en.wikipedia.org/wiki/WebGL" target="_blank">WebGL</a> enabled in your browser to use this site.
+</p>
+<p>
+Below is an overview of the objectives of Shader Hub although currently not all these objectives have been met as it is a work in progress.
+</p>
+<h2>Mission Statement</h2>
+<p>
+<ul class="icons-ul">
+<li><i class="icon-li icon-chevron-right"></i>
+To enable the design of custom shaders supporting GLES 2.0 (suitable for the web and mobile devices).
+</li>
+<li><i class="icon-li icon-chevron-right"></i>
+To construct a standard way to share 3D content across multiple platforms including android and iPhone/iPad.
+</li>
+<li><i class="icon-li icon-chevron-right"></i>
+To enable direct export from 3D design tools such a Blender/Maya/XSI to a content management system for storing 3D assets.
+</li>
+<li><i class="icon-li icon-chevron-right"></i>
+To provide an API for multiple platforms to access 3D content.
+</li>
+<li><i class="icon-li icon-chevron-right"></i>
+To provide a scripting engine to interact with the API.
+</li>
+<li><i class="icon-li icon-chevron-right"></i>
+To help bring 3D gaming to the net using webGL.
+</li>
+</ul>
+</p>
+<h2>Getting Started</h2>
+<h3>Video Tutorials</h3>
+<p>
+For those of you that like me prefer to follow a youtube video than follow written instructions I have prepared some video tutorials to help you get up and running.
+</p>
+
+<div>
+<iframe width="420" height="315" src="//www.youtube.com/embed/mFYAjMKBL_o" frameborder="0" allowfullscreen></iframe>
+<br/>Tutorial 1: How to set up the Blender plugin for Shaderhub - download the plugin <a href="static/download/shaderhub.zip">here</a>
+</div>
+<div>
+<iframe width="420" height="315" src="//www.youtube.com/embed/kRsDQ9xHf0o" frameborder="0" allowfullscreen></iframe>
+<br/>Tutorial 2: How to upload your 3D Mesh to Shaderhub and configure the vertex/fragment shaders
+</div>
+<h3>Step By Step Instructions</h3>
+<p>Although relatively easy to use, to get your 3D live online it is not simply a matter of uploading your 3D and leaving at that.  Because this site is designed for Shader programmers as well as Artists it is necessary to also at minimum configure some shader parameters which essentially tells the shader which bits of data you want to pass to which parameters.  Users who have written GLSL shaders will probably want to enhance the shader code to implement extra effects. Other users who are not familiar with programming may find it a bit complicated to get started but by following the tutorial you should be able to get your work up and visible pretty quickly.
+</p>
+<h3>Upload your 3D</h3>
+<ol>
+<li>
+Make sure your browser supports webGL and that it is enabled - check <a href="http://get.webgl.org/" target="_blank">here</a>
+</li>
+<li>
+Register and log in to your account - It is completely free, but you will have to verify your email address.
+</li>
+<li>
+Navigate to your profile. To do this, open the slide out menu and select Profile. You will notice there is a section labeled <b>secret</b> with a GUID after it.  This number is your secret code which identifies you when sending up content - You should not share this number with others! Make a note of it as you will need it later.
+</li>
+<li>
+Make sure you have a copy of <a href="http://www.blender.org/download/" target="_blank">Blender 2.69</a> running with your 3D content loaded. Other versions may work but because blender is constantly being developed and changing the python script it supports is also likely to change from time to time.
+</li>
+<li>
+You now have two options, install the blender plugin which you can download <a href="static/download/shaderhub.zip">here</a> or go to Blender open a python editor window and paste the following code into it:<br/>
+<pre id="pythonSrc1" class='editor'>
+import json
+import requests
+
+def roundList(l, n):
+    return list(map(lambda x: round(x, n), l))
+
+def exportMesh(obj_dict, obj, prefix):
+    bpy.context.scene.objects.active
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.quads_convert_to_tris()
+    bpy.ops.object.mode_set(mode='OBJECT')
+    mesh = bpy.context.active_object.data
+    mesh.update(True, True)
+    vertex_list = []
+    normal_list = []
+    smooth = False
+    for face in mesh.tessfaces:
+        if face.use_smooth:
+            smooth = True
+        for index in face.vertices:
+            vert = mesh.vertices[index]
+            vertex_list.append(vert.co[0])
+            vertex_list.append(vert.co[1])
+            vertex_list.append(vert.co[2])
+            if smooth:
+                normal_list.append(vert.normal[0])
+                normal_list.append(vert.normal[1])
+                normal_list.append(vert.normal[2])
+            else:
+                normal_list.append(face.normal[0])
+                normal_list.append(face.normal[1])
+                normal_list.append(face.normal[2])
+    obj_dict[prefix+'_vertices'] = roundList(vertex_list,4)
+    obj_dict[prefix+'_normals'] = roundList(normal_list,4)
+    useTexture = False
+    if len(mesh.tessface_uv_textures) > 0:
+        uv_list = []
+        active_uv_layer = mesh.tessface_uv_textures.active
+        if(active_uv_layer):
+            useTexture = True
+            for face_uvmap in mesh.tessface_uv_textures:
+                for uvmap in face_uvmap.data:
+                    uv_list.append(uvmap.uv[0][0])
+                    uv_list.append(uvmap.uv[0][1])
+                    uv_list.append(uvmap.uv[1][0])
+                    uv_list.append(uvmap.uv[1][1])
+                    uv_list.append(uvmap.uv[2][0])
+                    uv_list.append(uvmap.uv[2][1])
+            obj_dict[prefix+'_'+face_uvmap.name+'_uvs'] = roundList(uv_list,6)
+    obj_dict = exportShader(obj_dict, prefix+'_Shader', useTexture)
+    return obj_dict
+        
+def exportMatrix(obj_dict, obj, prefix):
+    w = []
+    l = []
+    for i in range(0, 4):
+        for j in range(0, 4):
+            w.append(obj.matrix_world[i][j])
+            l.append(obj.matrix_local[i][j])
+    obj_dict[prefix+'_local'] = l
+    obj_dict[prefix+'_world'] = w
+    return obj_dict
+
+def exportShader(obj_dict, prefix, useTexture):
+    if useTexture:
+        obj_dict[prefix+'_frag'] = "\n\
+	precision mediump float;\n\
+	varying vec3 vTransformedNormal;\n\
+	varying vec4 vPosition;\n\
+	varying vec2 vTextureCoord;\n\
+	uniform vec3 uAmbientColor;\n\
+	uniform vec3 uPointLightingLocation;\n\
+	uniform vec3 uPointLightingColor;\n\
+	uniform sampler2D uSampler;\n\
+	void main(void) {\n\
+		vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);\n\
+		float directionalLightWeighting = max(dot(normalize(vTransformedNormal), lightDirection), 0.0);\n\
+		vec3 lightWeighting = uAmbientColor + uPointLightingColor * directionalLightWeighting;\n\
+		vec4 fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));\n\
+		gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);\n\
+	}"
+        obj_dict[prefix+'_vert'] = "\n\
+    attribute vec3 aVertexPosition;\n\
+    attribute vec3 aVertexNormal;\n\
+	attribute vec2 aTextureCoord;\n\
+	uniform mat4 uMVMatrix;\n\
+    uniform mat4 uPMatrix;\n\
+    uniform mat3 uNMatrix;\n\
+    varying vec2 vTextureCoord;\n\
+    varying vec3 vTransformedNormal;\n\
+    varying vec4 vPosition;\n\
+    void main(void) {\n\
+        vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);\n\
+        gl_Position = uPMatrix * vPosition;\n\
+        vTransformedNormal = uNMatrix * aVertexNormal;\n\
+		vTextureCoord = aTextureCoord;\n\
+    }"
+    else:
+        obj_dict[prefix+'_frag'] = "\n\
+    precision mediump float;\n\
+	varying vec3 vTransformedNormal;\n\
+	varying vec4 vPosition;\n\
+	uniform vec3 uAmbientColor;\n\
+	uniform vec3 uPointLightingLocation;\n\
+	uniform vec3 uPointLightingColor;\n\
+	void main(void) {\n\
+		vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);\n\
+		float directionalLightWeighting = max(dot(normalize(vTransformedNormal), lightDirection), 0.0);\n\
+		vec3 lightWeighting = uAmbientColor + uPointLightingColor * directionalLightWeighting;\n\
+		vec4 fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);\n\
+		gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);\n\
+	}"
+        obj_dict[prefix+'_vert'] = "\n\
+    attribute vec3 aVertexPosition;\n\
+    attribute vec3 aVertexNormal;\n\
+    uniform mat4 uMVMatrix;\n\
+    uniform mat4 uPMatrix;\n\
+    uniform mat3 uNMatrix;\n\
+    varying vec3 vTransformedNormal;\n\
+    varying vec4 vPosition;\n\
+    void main(void) {\n\
+        vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);\n\
+        gl_Position = uPMatrix * vPosition;\n\
+        vTransformedNormal = uNMatrix * aVertexNormal;\n\
+    }"
+    return obj_dict
+    
+def exportSelectedObjects():
+    i = 1
+    obj_dict = {}
+    for obj in bpy.context.selected_objects:
+        if obj.type == "MESH":
+            prefix = ("Mesh_%03d_" % i) + obj.name
+            obj_dict = exportMesh(obj_dict, obj, prefix)
+        prefix = ("Matrix_%03d_" % i) + obj.name
+        obj_dict = exportMatrix(obj_dict, obj, prefix)
+        i = i + 1
+    return obj_dict
+
+scene_file = {
+            'file_name' : '*** My3DFile ***',
+            'file_info' : '*** Add description here ***',
+            'secret' : '*** Put secret GUID here ***',
+            'op' : 'overwrite'}
+
+scene_file['data']=exportSelectedObjects()
+
+url = "http://igsite-shaderdesigner.rhcloud.com/datastore/uploadjson"
+headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+r = requests.post(url, data=json.dumps(scene_file), headers=headers)
+</pre>
+<script>
+    var editor1 = ace.edit("pythonSrc1");
+    editor1.setTheme("ace/theme/chrome");
+    editor1.getSession().setMode("ace/mode/python");
+</script>
+
+This is the script we use to upload 3D content from Blender to the website!
+</li>
+<li>
+You will notice at the bottom there is a section that look like this:
+
+<pre id="pythonSrc2" class="editor" style="height:70px">
+scene_file = {
+            'file_name' : '*** My3DFile ***',
+            'file_info' : '*** Add description here ***',
+            'secret' : '*** Put secret GUID here ***',
+            'op' : 'overwrite'}
+</pre>
+<script>
+    var editor2 = ace.edit("pythonSrc2");
+    editor2.setTheme("ace/theme/chrome");
+    editor2.getSession().setMode("ace/mode/python");
+</script>
+
+Replace <b>*** My3DFile ***</b> with a file name which will appear in your file list online.<br/>
+Replace <b>*** Add description here ***</b> with a description of your file and please credit the artist if it is not you.<br/>
+Replace <b>*** Put secret GUID here ***</b> with the secret GUID that we found earlier.<br/>
+</li>
+<li>
+<p>
+This script requires a module called <a href="http://docs.python-requests.org/en/latest/user/install/" target="_blank">requests.py</a> to be installed for blenders version of python.  Currently this module is not part of blender but is needed to send data to the website, note also that setting it up for a global version of python is not enough as Blender will need to know how to access it.  Either install the model and copy it into blenders python modules or make sure you have a path variable set up so that blender can find it.
+</p>
+<p>
+Setting up the requests module is beyond the scope of this tutorial, but these links should help:
+<ul>
+<li><a href="http://docs.python-requests.org/en/latest/user/install/"  target="_blank">Requests Module</a></li>
+<li><a href="http://www.python.org/getit/releases/3.3.0/" target="_blank">Python</a></li>
+<li><a href="http://www.python.org/getit/releases/3.3.0/" target="_blank">Blender</a></li>
+</ul>
+Note that you can test it by typing:<br/>
+<b>import requests</b><br/>
+Into the interactive python console in blender.  If it worked you should not see the following error:<br/>
+<b>ImportError: No module named 'requests'</b><br/>
+</p>
+</li>
+<li>
+Ensure that the object(s) you want to send up are selected and run the script.  Assuming everything went to plan your file should now be stored online.<br/>
+</li>
+</ol>
+<h3>Upload Textures</h3>
+<ol>
+<li>
+You must upload any textures used by your 3D manually, to do this, from your profile, click on files and locate the file you just uploaded. You should see three tabs.  The first called attributes should contain the key's for the various bits of data in your 3D model file.  The second tab is for managing any associated textures and the final tab will be for downloading content on mobile devices via QR code but the mobile applications haven't been built yet.  They are on my ToDo list.
+</li>
+<li>
+Open the textures tab and name and upload your textures from there.  Note that I haven't written delete yet, so you cannot remove textures once they are uploaded currently.  Ensure that you give them a sensible names as you will need to access your textures on the next stage.
+</li>
+</ol>
+<h3>Configure your Shaders</h3>
+<p>
+When you uploaded your file from blender it sent with it some template shaders which should be enough to get you started.  If the model has uv coordinates it will have sent the textured version of the fragment/vertex shaders.  Otherwise it will send a simpler shader that does not include texture mapping.
+</p>
+<ol>
+<li>
+Click add program to create a new shader.
+</li>
+<li>
+Choose and/or edit your vertex and fragment shaders.
+</li>
+<li>
+Hit the compile button.
+</li>
+<li>
+If there were no errors you should now be able to configure your parameters.  In the first section is listed all the attributes going into your shader, these would be things like normals, vertex positions and uv coordinates. From the select boxes bind the attributes to the associated data binding that belong to your model.
+</li>
+<li>
+Next you will see a list of uniform values from your shader.  These also need to be configured, if a suitable datatype was uploaded from blender then you can just select the binding, otherwise it must be configured manually.
+</li>
+<li>
+To define data manually, you can select the <b>Define</b> button, here you can set up initial values for your uniform parameters.
+</li>
+<li>
+You will also notice a button called <b>Apply Operations</b>.  This tells the system to apply certain operations to your scene.  Some require data to have been defined previously either via the drop down or the manual define, others do not require data but generate data for you.
+<p>
+The configuration process is a little complicated if you don't know what the parameters are for, but there are some useful operations you can apply:
+</p>
+<p>
+For your projection matrix you can use the operations, <b>Perspective</b> or <b>Orthographic</b>. The easiest way to set up your normal matrix is to select the objects <b>Local</b> matrix transform rather than the <b>world</b> matrix transform and apply the operations <b>Transpose</b>.  You can also use the <b>Inverse</b> and <b>Transpose</b> operations together on your world matrix, but I don't think you need to do that because the inverse just takes your model back to local coordinates anyway.
+</p>
+<p>
+For your model view parameter I would set it to the world matrix from the select box and then add the <b>CameraLookAt</b> operation which will allow you to navigate the camera in the scene (only via sliders at the moment - may add keyboard/mouse navigation later?)
+</p>
+<p>
+Another operation you will find useful is <b>Range</b> which just applies to scalar values and vectors.  This is for the controls on your HUD when you render the scene.  It allows you to modify your uniform values with sliders in real time.  It has three parameters, min, max and step - These define the minimum value for your uniform parameter, the maximum number and the size of the step on the slider.  You can use this to for instance change colour settings or light settings etc. What you decide to bind to it really depends on the uniforms in your shader and what you want to expose to the user viewing your model.
+</p>
+</li>
+<li>
+When you are content that you have configured your shader parameters. Navigate back to your file and the select the <b>Render</b> link. If everything was configured correctly you should see your model rendered in 3D.  You can move the sliders around to change your camera/perspective or orthographic parameters and any others uniforms you exposed to the HUD using the <b>Range</b> operation.
+</li>
+</ol>
+<p>
+Note: the take snapshot button allows you to create a thumbnail for your model and also share a link to your work on social networks.
+</p>
+<p>
+I'm sorry but there is no FAQ or Forum sections yet, but feel free to contact me via my <a href="http://danxshepherd.wordpress.com/" target="_blank">blog</a> if you have any questions or difficulties.
+</p>
+<p>
+If you want to learn more about webGL and GLSL shader programming, a good place to start is: <a href="http://learningwebgl.com/blog/" target="_blank">Learning Web GL</a>.
+</p>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+{% if file %}
+	<p>File: {{ file.file_name }}</p>
+	<script type="text/javascript">
+	var file_uuid = '{{ file.uuid }}';
+	var matrices= [ {% for mat in matrices %}{ '{{mat.uuid}}':'{{mat.field}}' },{%endfor%} null];
+    var normals = [ {% for norm in normals %}{ '{{norm.uuid}}':'{{norm.field}}' },{%endfor%} null];
+    var vertices = [ {% for vert in vertices %}{ '{{vert.uuid}}':'{{vert.field}}' },{%endfor%} null];
+    var uvs = [ {% for uv in uvs %}{ '{{uv.uuid}}':'{{uv.field}}' },{%endfor%} null];
+    var shaders = [ {% for shader in shaders %}{ '{{shader.uuid}}':'{{shader.field}}' },{%endfor%} null];
+    var textures = [ {% for tex in textures %}{ '{{tex.uuid}}':'{{tex.name}}' },{%endfor%} null];
+    var modelData = {{ json|safe }};
+    matrices.pop();
+    normals.pop();
+    vertices.pop();
+    uvs.pop();
+    shaders.pop();
+    textures.pop();
+	$(document).ready(function () {
+		var configController = new ConfigController($("#configDiv"));
+		configController.init();
+	});
+	</script>
+	<div id="configDiv"></div>
+{% else %}
+	<p>file not found</p>
+{% endif %}
+{% endblock %}

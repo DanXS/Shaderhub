@@ -1,0 +1,36 @@
+The file post_json.py is a blender script to send mesh objects in a scene up to the website.
+
+Instructions:
+
+In order for this to work, you need to point the website:
+url = http://[host:port]/datastore/uploadjson
+
+Set:
+secret = [your secret key] - this can be found in the mysql database, but will be visible on your profile page later
+
+Select the mesh objects in the seen you wish to export.
+
+Run the script from blender.
+
+This may not work if the python module 'requests' does not exist or blender cannot find it.
+
+You would first need to install requests as a site package for python3.  This means that python3 must be in your
+system path prior to installing the 'requests' module, otherwise it may install to older versions of python.
+
+Blender also installs python3 in it's own file system, so you would either need to move requests into the correct
+path for blender to find it as one of it's site packages or add it to the blender path:
+
+import sys
+
+sys.path.append([path to python3 site packages]) - (The path containing the requests module)
+
+Notes:
+
+So far this only exports mesh objects, in terms of triangulated vertices and normals.
+It will also send uv coordinates if the object has texturing, but not the textures themselves.
+It also does not sent lights, cameras, transforms, bones, skinning information etc.
+But this will change as the project progresses.
+The abilty to choose from some stock shaders or write your own will be added to the website in due course as well.
+I may also add key frame information for small animations as well.
+
+

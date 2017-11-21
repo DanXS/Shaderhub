@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+	{% if error %}
+		{% if error == "ALREADY_REGISTERED" %}
+			<p>You are already registered! Please <a href='/users/resetpassword'>reset</a> your password.</p>
+		{% elif error == "VALIDATION_ERROR" %}
+			<p>There was an error validating your details. Please try again.</p>
+		{% else %}
+			<p>An error occurred while registering: {{error}}</p>
+		{% endif %}
+	{% elif success %}
+		{% if success == "CHECK_EMAIL" %}
+			<p>Thank you {{ new_user.first_name }}, you are now registered with Ingenious Games.  Please verify your email address so you can get started!</p>
+		{% endif %}
+	{% endif %}
+	{% if form %}
+	<p>Register to get your art seen!</p>
+	<form action="/users/register" method="post" >{% csrf_token %}
+	<ul>
+	{{ form.as_ul }}
+	</ul>
+	<button type="submit">Register</button>
+	</form>
+	{% endif %}
+{% endblock %}

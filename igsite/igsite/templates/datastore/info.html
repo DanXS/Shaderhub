@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+{% if file %}
+	<p><a href="/datastore/{{ file.uuid }}/" target="_blank">View</a>
+	{% if request.session.igsession %}
+		{% if request.session.iguser == file.user_uuid.uuid %}
+	<a href="/configure/{{ file.uuid }}/">Configure</a>
+		{% endif %}
+	{% endif %}
+	<a href="/render/{{ file.uuid }}/">Render</a></p>
+	<p>File: {{ file.file_name }}</p>
+	<div id="tabs">
+  		<ul>
+    		<li><a href="#fragment-1"><span>Attributes</span></a></li>
+    		<li><a href="#fragment-2"><span>Textures</span></a></li>
+    		<li><a href="#fragment-3"><span>Download</span></a></li>
+  		</ul>
+  		<div id="fragment-1">
+		{% if data %}
+			<p>Attributes:</p>
+			<div class='attributeContainer'>
+			<ul class="icons-ul">
+			{% for field in data %}
+				<li><i class="icon-li icon-puzzle-piece"></i>{{ field.field }}</li>
+			{% endfor %}
+			</ul>
+			</div>
+			{% endif %}
+		</div>
+		<div id="fragment-2">
+			{% if textures %}
+			<p>Textures:</p>
+			{% for tex in textures %}
+				<div class='textureContainer'><img src='/media/{{tex.file_name}}' width='150px'/><br/>{{ tex.name }}</div>
+			{% endfor %}
+			{% endif %}
+			<div class='clearfloat'></div>
+			{% if request.session.igsession %}
+				{% if request.session.iguser == file.user_uuid.uuid %}
+			<hr/>
+			<div class='addTextureContainer'>
+				<p>Add Texture</p>
+				<form action="/datastore/uploadimage" method="post" enctype="multipart/form-data">{% csrf_token %}
+				<input type="hidden" name="file_uuid" value="{{ file.uuid }}"/>
+				<ul>
+				{{ form.as_ul }}
+				</ul>
+				<button type="submit">Upload Texture</button>
+			</form>
+			</div>
+				{% endif %}
+			{% endif %}
+			<div class='clearfloat'></div>
+		</div>
+		<div id="fragment-3">
+			<div style="padding:10px;background-color:#fff">
+			<div id="qrcodeCanvas"></div>
+			</div>
+			{% if host %}
+			<script>
+				jQuery('#qrcodeCanvas').qrcode({
+					text	: "http://{{ host }}/datastore/{{ file.uuid }}/"
+				});	
+			</script>
+			{% endif %}
+		</div>
+	</div>
+	<script>
+    $(document).ready(function() {
+    	$("#tabs").tabs();
+    	$("#submit").click(function () {
+    		alert("clicked submit");
+    	});
+  	});
+	</script>
+{% else %}
+    <p>File does not exist</p>
+{% endif %}
+{% endblock %}

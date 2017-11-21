@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+	{% if error %}
+		{% if error == "VERIFY_ERROR" %}
+			<p>Your email could not be verified, please ensure that you verify your email address within 24 hours of registering.</p>
+		{% elif error == "CREDENTIALS_ERROR" %}
+			<p>Your credentials are incorrect! If you have forgotten your password, you can reset it by clicking <a href="/users/resetpassword">here</a>.</p>
+		{% endif %}
+	{% elif success %}
+		{% if success == "VERIFY_AGAIN" %}
+			<p>Thank you, your credentials were valid and an email has been sent to you so that you may verify your email address.</p>
+		{% elif success == "DONE" %}
+			<p>Thank you, your email has been verified! please log in above.</p>
+		{% endif %}
+	{% endif %}
+	{% if form %}
+		<p>Please resubmit your credentials</p>
+		<form action="/users/verify" method="post" >{% csrf_token %}
+		<ul>
+		{{ form.as_ul }}
+		</ul>
+		<button type="submit">Submit</button>
+		</form>
+	{% endif %}
+{% endblock %}

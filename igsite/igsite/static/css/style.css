@@ -1,0 +1,204 @@
+html, body {
+	background-color:#303030;
+	color:#ffffff;
+	font-family: 'Verdana';
+	font-weight: normal;
+	font-size:12px!important;
+	margin:0;
+	padding:0;
+}
+
+label, input, button, select, textarea {
+	font-family: 'Verdana';
+	font-weight: normal;
+	font-size:12px!important;
+}
+	
+#content {
+	margin:10px;
+	padding:10px;
+	border-radius:5px;
+	background-color:#404040;
+
+}
+
+h1 {
+	font-size:18px;
+}
+
+h2 {
+	font-size:14px;
+}
+
+h3 {
+	font-size:12px;
+}
+
+a {
+	color:#ffaa00;	
+}
+
+a.visited {
+	color:#ffaa00;
+}
+
+a:hover {
+	color:#00aaFF;
+}
+
+.clearfloat {
+	clear:both;
+}
+
+.title {
+	color:#000000;
+	text-align:center;
+}
+
+#header h1 {
+	margin:0px;
+	border-radius:5px 5px 0px 0px;
+	 /* fallback - don't bother */
+	 background-color:#303030;
+	 /* Safari 4-5, Chrome 1-9 */
+	 background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#303030), to(#ffaa00));
+	 /* Safari 5.1, Chrome 10+ */
+	 background: -webkit-linear-gradient(top, #cccccc, #303030);
+	 /* Firefox 3.6+ */
+	 background: -moz-linear-gradient(top, ##ffaa00, #303030);
+	 /* IE 10 */
+	 background: -ms-linear-gradient(top, #ffaa00, #303030);
+	 /* Opera 11.10+ */
+	 background: -o-linear-gradient(top, #ffaa00, #303030);
+}
+
+.header_right {
+	float:right;
+	padding-right:5px;
+}
+
+.open_btn {
+	margin-top:10px;
+	margin-left:10px;
+	width:20px;
+	height:20px;
+	float:left;
+	background: transparent url(../images/open.png) no-repeat center top;
+	cursor: pointer; /* hand-shaped cursor */
+	cursor: hand; /* for IE 5.x */
+}
+
+
+#glCanvas {
+  position: relative; 
+  top: 0px;
+  width:100%;
+}
+
+#AddProgram {
+	margin:10px;
+	float:right;
+}
+
+#CommitBindings {
+	margin:10px;
+	float:right;
+}
+
+.addOpperation {
+	margin:10px;
+	float:right;
+}
+
+.textureContainer {
+	margin:10px;
+	float:left;
+}
+
+.addTextureContainer {
+	margin:10px;
+	float:right;
+}
+
+.canvasContainer {
+	padding:5px;
+	border-radius:5px;
+	background-color:#222222;
+}
+
+.attributeContainer {
+	width:300px;
+	height:300px;
+	border-radius:5px;
+	border:1px solid #fff;
+	overflow:auto;
+}
+
+.compileShaders {
+	margin:10px;
+	float:right;
+}
+
+.previewShader {
+	margin:10px;
+	float:right;
+}
+
+.clearFloat {
+	clear:both;
+}
+
+.bindingTable {
+	padding:10px;
+	border:1px solid #fff;
+	border-radius:5px;
+}
+
+
+.oppListContainer {
+	padding:5px;
+	border:1px solid #fff;
+	width:300px;
+	height:150px;
+	overflow:auto;
+	border-radius:5px;
+}
+
+.editor {
+	height:300px;
+}
+
+.hudControlContainer {
+	position:absolute;
+	width:200px;
+	right:25px;
+	max-height:600px;
+	overflow-x:hidden;
+	overflow-y:scroll;
+	padding:20px;
+	border:solid 1px #fff;
+	background-color:#333;
+	z-index:1000;
+	border-radius:3px;
+	opacity:0.7;
+}
+
+.slider {
+	width:140px;
+	float:left;
+}
+
+.sliderAmount {
+	width:30px;
+	padding-left:10px;
+	float:right;
+	overflow:hidden;
+}
+
+hr {
+	margin-top:0px;
+	margin-bottom:10px;
+}
+
+
+

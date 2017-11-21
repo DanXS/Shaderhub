@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block content %}
+<script id="shader-fs0" type="x-shader/x-fragment">
+
+	precision mediump float;
+
+	varying vec3 vTransformedNormal;
+	varying vec4 vPosition;
+
+	uniform vec3 uAmbientColor;
+	uniform vec3 uPointLightingLocation;
+	uniform vec3 uPointLightingColor;
+
+	void main(void) {
+		vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+		float directionalLightWeighting = max(dot(normalize(vTransformedNormal), lightDirection), 0.0);
+		vec3 lightWeighting = uAmbientColor + uPointLightingColor * directionalLightWeighting;
+		vec4 fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+		gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
+	}
+
+</script>
+<script id="shader-vs0" type="x-shader/x-vertex">
+
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+    varying vec3 vTransformedNormal;
+    varying vec4 vPosition;
+
+    void main(void) {
+        vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position = uPMatrix * vPosition;
+        vTransformedNormal = uNMatrix * aVertexNormal;
+    }
+
+</script>
+<script id="shader-fs1" type="x-shader/x-fragment">
+
+	precision mediump float;
+
+	varying vec3 vTransformedNormal;
+	varying vec4 vPosition;
+	varying vec2 vTextureCoord;
+
+	uniform vec3 uAmbientColor;
+	uniform vec3 uPointLightingLocation;
+	uniform vec3 uPointLightingColor;
+	uniform sampler2D uSampler;
+
+	void main(void) {
+		vec3 lightDirection = normalize(uPointLightingLocation - vPosition.xyz);
+		float directionalLightWeighting = max(dot(normalize(vTransformedNormal), lightDirection), 0.0);
+		vec3 lightWeighting = uAmbientColor + uPointLightingColor * directionalLightWeighting;
+		vec4 fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+		gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
+	}
+
+</script>
+<script id="shader-vs1" type="x-shader/x-vertex">
+
+    attribute vec3 aVertexPosition;
+    attribute vec3 aVertexNormal;
+	attribute vec2 aTextureCoord;
+    
+	uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+    varying vec2 vTextureCoord;
+    varying vec3 vTransformedNormal;
+    varying vec4 vPosition;
+
+    void main(void) {
+        vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position = uPMatrix * vPosition;
+        vTransformedNormal = uNMatrix * aVertexNormal;
+		vTextureCoord = aTextureCoord;
+    }
+
+</script>
+{% if json %}
+<script type="text/javascript">
+// Parse the json data to retreive
+var modelData={{ json|safe }};
+var vertices = [];
+var normals = [];
+var uvs = [];
+for(k in modelData) {
+	var type = k.substring(k.lastIndexOf('_')+1);
+	switch(type) {
+		case 'vertices':
+			vertices.push(k);
+			break;
+		case 'normals':
+			normals.push(k);
+			break;
+		case 'uvs':
+			uvs.push(k);
+			break;
+	}
+}
+vertices = vertices.sort();
+normals = normals.sort();
+uvs = uvs.sort();
+console.log(vertices);
+console.log(normals);
+console.log(uvs);
+
+// web gl part
+var gl;
+var vertexBuffers = new Array();
+var normalBuffers = new Array();
+var uvBuffers = new Array();
+var shaderPrograms = new Array();
+var nShaders = 2;
+
+function webGLStart() {
+	var canvas = document.getElementById("glCanvas");
+	if(initGL(canvas)) {
+		initShaders();
+		initGetShaderParams();
+		initBuffers();
+		gl.clearColor(0.2, 0.2, 0.2, 1.0);
+		gl.enable(gl.DEPTH_TEST);
+		drawScene();
+	}
+}
+
+function initGL(canvas) {
+	try {
+		gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+		gl.viewportWidth = canvas.width;
+		gl.viewportHeight = canvas.height;
+		return true;
+	} catch(e) {
+	}
+	if (!gl) {
+		alert("Could not initialise WebGL!");
+		return false;
+	}
+}
+
+function initShaders() {
+	for(i = 0; i < nShaders; i++) {
+	    var fragmentShader = getShader(gl, "shader-fs"+i);
+	    var vertexShader = getShader(gl, "shader-vs"+i);
+	    shaderPrograms[i] = gl.createProgram();
+	    gl.attachShader(shaderPrograms[i], vertexShader);
+	    gl.attachShader(shaderPrograms[i], fragmentShader);
+	    gl.linkProgram(shaderPrograms[i]);
+	    if (!gl.getProgramParameter(shaderPrograms[i], gl.LINK_STATUS)) {
+	      alert("Could not initialise shaders:"+i);
+	      return false;
+	    }
+    }
+    return true;
+}
+
+function initGetShaderParams() {
+	for(var i = 0; i < nShaders; i++) {
+		for(var j = 0; j < gl.getProgramParameter(shaderPrograms[i], gl.ACTIVE_ATTRIBUTES); j++) {
+			activeInfo = gl.getActiveAttrib(shaderPrograms[i], j);
+		}
+		for(var j = 0; j < gl.getProgramParameter(shaderPrograms[i], gl.ACTIVE_UNIFORMS); j++) {
+			activeInfo = gl.getActiveUniform(shaderPrograms[i], j);
+		}
+	}
+}
+
+function initBuffers() {
+	for(i = 0; i < vertices.length; i++) {
+		var vertexBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices[i]), gl.STATIC_DRAW);
+		vertexBuffer.itemSize = 3;
+    	vertexBuffer.numItems = vertices[i].length/3;
+		vertexBuffers.push(vertexBuffer);
+	}
+	for(i = 0; i < normals.length; i++) {
+		var normalBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals[i]), gl.STATIC_DRAW);
+		normalBuffer.itemSize = 3;
+    	normalBuffer.numItems = normals[i].length/3;
+		normalBuffers.push(normalBuffer);
+	}
+	for(i = 0; i < uvs.length; i++) {
+		var uvBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs[i]), gl.STATIC_DRAW);
+		uvs.itemSize = 2;
+    	uvs.numItems = uvs[i].length/2;
+		uvBuffers.push(uvBuffer);
+	}
+}
+
+function drawScene() {
+    gl.useProgram(shaderPrograms[0]);
+}
+
+function getShader(gl, id) {
+	var shaderScript = document.getElementById(id);
+	if (!shaderScript) {
+		return null;
+	}
+	var str = "";
+	var k = shaderScript.firstChild;
+	while (k) {
+		if (k.nodeType == 3)
+			str += k.textContent;
+		k = k.nextSibling;
+	}
+	var shader;
+	if (shaderScript.type == "x-shader/x-fragment") {
+		shader = gl.createShader(gl.FRAGMENT_SHADER);
+	} else if (shaderScript.type == "x-shader/x-vertex") {
+		shader = gl.createShader(gl.VERTEX_SHADER);
+	} else {
+		return null;
+	}
+	gl.shaderSource(shader, str);
+	gl.compileShader(shader);
+	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+		alert(gl.getShaderInfoLog(shader));
+		return null;
+	}
+	return shader;
+}
+
+window.onload=function() {
+	if (!window.WebGLRenderingContext) {
+		if(confirm("WebGL is not installed, get it now?")) {
+			window.location = "http://get.webgl.org";
+		}
+	} else {
+		webGLStart();
+	}
+}
+
+</script>
+<div class='canvasContainer'>
+<canvas id="glCanvas" width="1200" height="900" style="background-color:#000000;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+</div>
+{% else %}
+<p>No model to render</p>
+{% endif %}
+{% endblock %}

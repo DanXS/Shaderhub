@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+{% if dir_list %}
+    <ul class="icons-ul">
+    {% for file in dir_list %}
+        <li><i class="icon-li icon-file"></i><a href="/datastore/info/{{ file.uuid }}/"><img style="width:170px;height:128px;" src="/media/thumb_{{ file.uuid }}.png" onerror="this.src='/static/images/thumb_error.png'" alt="No image!"></img><br/>{{ file.file_name }}</a><p>{{ file.file_info }}</p></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No uploaded files.</p>
+{% endif %}
+{% endblock %}

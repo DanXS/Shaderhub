@@ -1,0 +1,29 @@
+<html>
+<title>upload test</title>
+<head>
+<script src='http://code.jquery.com/jquery-2.0.3.min.js'></script>
+</head>
+<body>
+<script type='text/javascript'>
+var obj = {"file_name":"fredsFile", "secret":"68e718b9-474b-4f31-a0a6-48cc6bffad07", "overwrite" : true, "data" : {
+		nums1 : [1.2,2.7,3.03,4.99,5.1232],
+		nums2 : [3.032,2.043,4.234,5.54,3.32,9.32,3.34299],
+		string1 : "hello angee"
+	}};
+$.ajax({
+    url: '/datastore/uploadjson',
+    type: 'POST',
+    contentType: 'application/json; charset=utf-8',
+    data: JSON.stringify(obj),
+    dataType: 'json',
+    success: function(result) {
+    	if(result.Error != undefined)
+        	alert(result.Error);
+        else
+        	$("#result").html(JSON.stringify(result));
+    }
+});
+</script>
+<div id='result'></div>
+</body>
+</html>

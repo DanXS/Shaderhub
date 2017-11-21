@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+	{% if error %}
+		{% if error == "CREDENTIALS_ERROR" %}
+			<p>Your credentials are incorrect! If you have forgotten your password, you can reset it by clicking <a href="/users/resetpassword">here</a>.</p>
+		{% endif %}
+	{% endif %}
+	{% if form %}
+		<p>Please enter your credentials</p>
+		<form action="/users/login" method="post" >{% csrf_token %}
+		<ul>
+		{{ form.as_ul }}
+		</ul>
+		<button type="submit">Log In</button>
+		</form>
+	{% endif %}
+{% endblock %}

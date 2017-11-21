@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if file %}
+	<p>File: {{ file.file_name }}</p>
+	<script type="text/javascript">
+	var matrices = [ {% for mat in matrices %}{ '{{mat.uuid}}':'{{mat.field}}' },{%endfor%} null];
+	var normals = [ {% for norm in normals %}{ '{{norm.uuid}}':'{{norm.field}}' },{%endfor%} null];
+	var vertices = [ {% for vert in vertices %}{ '{{vert.uuid}}':'{{vert.field}}' },{%endfor%} null];
+	var uvs = [ {% for uv in uvs %}{ '{{uv.uuid}}':'{{uv.field}}' },{%endfor%} null];
+	var shaders = [ {% for shader in shaders %}{ '{{shader.uuid}}':'{{shader.field}}' },{%endfor%} null];
+	var modelData = {{ json|safe }};
+	{% if textures %}
+		var textures = [ {% for tex in textures %}{ '{{tex.uuid}}':'{{tex.file_name}}' },{%endfor%} null];
+	{% endif %}
+	var data = new Object();
+	matrices.pop();
+	data['matrices'] = matrices;
+	normals.pop();
+	data['normals'] = normals;
+	vertices.pop();
+	data['vertices'] = vertices;
+	uvs.pop();
+	data['uvs'] =  uvs;
+	shaders.pop();
+	data['shaders'] = shaders;
+	if(typeof textures != "undefined") {
+		textures.pop();
+		data['textures'] = textures;
+	}
+	data['modelData'] = modelData;
+	data['useHud'] = true;
+	data['useExperiment'] = true;
+	$(document).ready(function () {
+		if(modelData.shaderBindings != undefined) {
+			var shaderBindings = eval(modelData.shaderBindings);
+			var renderController = new RenderController(data);
+			var canvas = document.getElementById("glCanvas");
+			renderController.init(shaderBindings, canvas, "experiment", "programSelector", "experimentalVertex", "experimentalFragment");
+			$("#takeSnapshot").click(function () {
+				renderController.snapshot(this, function (imgData) {
+					$.ajax({
+						type: "POST",
+						url: "./../../datastore/uploadthumb",
+						data: JSON.stringify({file_uuid : '{{ file.uuid }}', data: imgData}),
+						success: function (data, textStatus, jqXHR) {
+							if(data.OK != undefined) {
+								$("#sharebtns").show();
+								$('#canvasImg').attr('src',"http://igsite-shaderdesigner.rhcloud.com/media/thumb_{{ file.uuid }}.png?{% now 'ymdhms' %}");
+								$(".st_sharethis_large").attr("st_image", "http://igsite-shaderdesigner.rhcloud.com/media/thumb_{{ file.uuid }}.png?{% now 'ymdhms' %}");
+								$(".st_facebook_large").attr("st_image", "http://igsite-shaderdesigner.rhcloud.com/media/thumb_{{ file.uuid }}.png?{% now 'ymdhms' %}");
+								$(".st_twitter_large").attr("st_image", "http://igsite-shaderdesigner.rhcloud.com/media/thumb_{{ file.uuid }}.png?{% now 'ymdhms' %}");
+								$(".st_linkedin_large").attr("st_image", "http://igsite-shaderdesigner.rhcloud.com/media/thumb_{{ file.uuid }}.png?{% now 'ymdhms' %}");
+								$(".st_pinterest_large").attr("st_image", "http://igsite-shaderdesigner.rhcloud.com/media/thumb_{{ file.uuid }}.png?{% now 'ymdhms' %}");
+								$(".st_email_large").attr("st_image", "http://igsite-shaderdesigner.rhcloud.com/media/thumb_{{ file.uuid }}.png?{% now 'ymdhms' %}");
+								stLight.options({publisher: "5cfcfd9f-b0d9-4d29-a21f-6f22d21d89f1", doNotHash: false, doNotCopy: false, hashAddressBar: false});
+							}
+							else if(data.Error != undefined)
+								alert(data.Error);
+							else
+								alert("Unknown Error!")
+						},
+						dataType:"json"
+					});
+				});
+			});
+		}
+		else
+			alert("No shaders configured - please go to configuration section!")
+	});
+</script>
+<div>
+<button id="takeSnapshot" style="margin:10px;">Take Snapshot...</button>
+<div id="sharebtns" style="padding:10px;display:none;">
+<img id="canvasImg" style="width:340px;height:256px;" src="http://igsite-shaderdesigner.rhcloud.com/media/thumb_{{ file.uuid }}.png"></img>
+<span class='st_sharethis_large' st_title='ShaderHub' st_url='http://igsite-shaderdesigner.rhcloud.com/render/{{ file.uuid }}' st_image="" displayText='ShareThis' ></span>
+<span class='st_facebook_large' st_title='ShaderHub' st_url='http://igsite-shaderdesigner.rhcloud.com/render/{{ file.uuid }}' st_image="" displayText='Facebook'></span>
+<span class='st_twitter_large' st_title='ShaderHub' st_url='http://igsite-shaderdesigner.rhcloud.com/render/{{ file.uuid }}' st_image="" displayText='Tweet'></span>
+<span class='st_linkedin_large' st_title='ShaderHub' st_url='http://igsite-shaderdesigner.rhcloud.com/render/{{ file.uuid }}' st_image="" displayText='LinkedIn'></span>
+<span class='st_pinterest_large' st_title='ShaderHub' st_url='http://igsite-shaderdesigner.rhcloud.com/render/{{ file.uuid }}' st_image="" displayText='Pinterest'></span>
+<span class='st_email_large' st_title='ShaderHub' st_url='http://igsite-shaderdesigner.rhcloud.com/render/{{ file.uuid }}' st_image="" displayText='Email'></span>
+</div>
+</div>
+<div class="canvasContainer">
+<div id="hudControl" class="hudControlContainer"  data-snap-ignore="true"></div>
+<canvas id="glCanvas" width="1200" height="900" style="background-color:#000000;">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+<div>
+<div id="experiment">
+<h2>Experiment with your shader code here.</h2>
+<p>
+Note that if you change attribute or uniform parameters here you will break the configuration. You must go to the configuration section and reconfigure your shaders there.  Also any changes you make here will not be saved.  The purpose of this section is just to allow users to play with GLSL shaders and view the results.
+</p>
+<div id="programSelector"></div>
+<h3>Vertex Shader</h3>
+<pre id="experimentalVertex" class="editor"></pre>
+<h3>Fragment Shader</h3>
+<pre id="experimentalFragment" class="editor"></pre>
+<button class="compileShaders">Compile</button>
+<div class="clearFloat"></div>
+</div>
+</div>
+</div>
+{% else %}
+	<p>file not found</p>
+{% endif %}
+{% endblock %}

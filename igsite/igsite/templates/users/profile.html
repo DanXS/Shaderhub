@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+{% if selected_user %}
+	<p>Name: {{ selected_user.first_name }} {{ selected_user.last_name }} </p>
+	<p>UUID: {{ selected_user.uuid }} </p>
+	{% if request.session.igsession %}
+		{% if request.session.iguser == selected_user.uuid %}
+	<p>Email: {{ selected_user.email }} </p>
+	<p>Secret: {{ selected_user.secret }} </p>
+		{% endif %}
+	{% endif %}
+	{% if isOnline %}
+		<p>Currently Online</p>
+	{% else %}
+		<p>Currently Offline</p>
+	{% endif %}
+	<a href='/datastore/dir/{{selected_user.uuid}}/'>Files</a>
+{% else %}
+    <p>User not found</p>
+{% endif %}
+{% endblock %}

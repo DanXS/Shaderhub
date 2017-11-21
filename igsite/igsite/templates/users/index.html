@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+{% if user_list %}
+    <ul class="icons-ul">
+    {% for user in user_list %}
+        <li><i class="icon-li icon-user"></i><a href="/users/{{ user.uuid }}/">{{ user.first_name }} {{ user.last_name }} </a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No active users.</p>
+{% endif %}
+{% endblock %}
